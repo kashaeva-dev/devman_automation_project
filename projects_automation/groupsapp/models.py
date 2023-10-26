@@ -1,24 +1,34 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-
-class Student(models.Model):
-    LEVELS = [
-        ('1_newborn', 'Новички'),
-        ('2_newborn_plus', 'Новички+'),
-        ('3_junior', 'Джуны'),
-    ]
+class Person(models.Model):
     firstname = models.CharField(
         max_length=40,
         verbose_name='Имя',
     )
     lastname = models.CharField(
-        max_length=100,
-        verbose_name='Фамилия'
+        max_length=40,
+        verbose_name='Фамилия',
     )
     telegram_id = models.PositiveBigIntegerField(
         verbose_name='Telegram id',
         db_index=True,
     )
+
+    class Meta:
+        verbose_name = 'Участник'
+        verbose_name_plural = 'Участники'
+
+    def __str__(self):
+        return f'{self.firstname} {self.lastname}'
+
+
+class Student(Person):
+    LEVELS = [
+        ('1_newborn', 'Новички'),
+        ('2_newborn_plus', 'Новички+'),
+        ('3_junior', 'Джуны'),
+    ]
     level = models.CharField(
         verbose_name='Уровень',
         max_length=15,
@@ -36,23 +46,10 @@ class Student(models.Model):
         verbose_name_plural = 'Студенты'
 
     def __str__(self):
-        return f'{self.firstname} {self.lastname}'
+        return f'{self.firstname} {self.lastname} - {self.get_level_display()}'
 
 
-class Project_manager(models.Model):
-    firstname = models.CharField(
-        max_length=40,
-        verbose_name='Имя',
-    )
-    lastname = models.CharField(
-        max_length=100,
-        verbose_name='Фамилия'
-    )
-    telegram_id = models.PositiveBigIntegerField(
-        verbose_name='Telegram id',
-        db_index=True,
-    )
-
+class Project_manager(Person):
     class Meta:
         verbose_name = 'Менеджер проектов'
         verbose_name_plural = 'Менеджеры проектов'
@@ -66,12 +63,6 @@ class Project(models.Model):
         verbose_name='Название проекта',
         max_length=100,
     )
-    start_date = models.DateField(
-        verbose_name='Дата начала',
-    )
-    end_date = models.DateField(
-        verbose_name='Дата окончания',
-    )
 
     class Meta:
         verbose_name = 'Проект'
@@ -79,6 +70,26 @@ class Project(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+
+class Week(models.Model):
+    start_date = models.DateField(
+        verbose_name='Дата начала',
+    )
+    project = models.ForeignKey(
+        Project,
+        verbose_name='Проект',
+        on_delete=models.PROTECT,
+        related_name='weeks',
+    )
+
+    class Meta:
+        verbose_name = 'Неделя'
+        verbose_name_plural = 'Недели'
+
+    def __str__(self):
+        return f'{self.start_date}'
+
 
 
 class Timeslot(models.Model):
@@ -95,23 +106,6 @@ class Timeslot(models.Model):
 
     def __str__(self):
         return f'{self.start_time} - {self.end_time}'
-
-
-class Trello_board(models.Model):
-    name = models.CharField(
-        verbose_name='Название доски',
-        max_length=200,
-    )
-    url = models.URLField(
-        verbose_name='Ссылка на доску',
-    )
-
-    class Meta:
-        verbose_name = 'Доска Trello'
-        verbose_name_plural = 'Доски Trello'
-
-    def __str__(self):
-        return f'{self.name}'
 
 
 class PMSchedule(models.Model):
@@ -135,10 +129,11 @@ class PMSchedule(models.Model):
     def __str__(self):
         return f'{self.project_manager}: {self.start_time} - {self.end_time}'
 
-class StudentSchedule(models.Model):
-    project = models.ForeignKey(
-        Project,
-        verbose_name='Проект',
+
+class StudentProjectWeek(models.Model):
+    week = models.ForeignKey(
+        Week,
+        verbose_name='Неделя',
         on_delete=models.PROTECT,
         related_name='schedule',
     )
@@ -147,6 +142,22 @@ class StudentSchedule(models.Model):
         verbose_name='Студент',
         on_delete=models.PROTECT,
         related_name='schedule',
+    )
+
+    class Meta:
+        verbose_name = 'Студенты по неделям'
+        verbose_name_plural = 'Студенты по неделям'
+
+    def __str__(self):
+        return f'{self.week}: {self.student.firstname} {self.student.lastname}'
+
+
+class StudentProjectSlot(models.Model):
+    student = models.ForeignKey(
+        StudentProjectWeek,
+        verbose_name='Студент',
+        on_delete=models.PROTECT,
+        related_name='slots',
     )
     slot = models.ForeignKey(
         Timeslot,
@@ -160,7 +171,7 @@ class StudentSchedule(models.Model):
         verbose_name_plural = 'Расписания студентов'
 
     def __str__(self):
-        return f'{self.student}: {self.slot}'
+        return f'{self.student.student.firstname} {self.student.student.lastname}: {self.slot}'
 
 
 class Group(models.Model):
@@ -188,12 +199,6 @@ class Group(models.Model):
         on_delete=models.PROTECT,
         related_name='groups',
     )
-    trello_board = models.ForeignKey(
-        Trello_board,
-        verbose_name='Доска Trello',
-        on_delete=models.PROTECT,
-        related_name='groups',
-    )
 
     class Meta:
         verbose_name = 'Группа'
@@ -208,13 +213,11 @@ class StudentGroup(models.Model):
         Group,
         verbose_name='Группа',
         on_delete=models.PROTECT,
-        related_name='students',
     )
     student = models.ForeignKey(
         Student,
         verbose_name='Студент',
         on_delete=models.PROTECT,
-        related_name='groups',
     )
 
     class Meta:
