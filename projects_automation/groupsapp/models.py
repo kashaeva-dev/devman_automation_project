@@ -1,21 +1,34 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
-class Student(models.Model):
-    LEVELS = [
-        ('1_newborn', 'Новички'),
-        ('2_newborn_plus', 'Новички+'),
-        ('3_junior', 'Джуны'),
-    ]
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE
+class Person(models.Model):
+    firstname = models.CharField(
+        max_length=40,
+        verbose_name='Имя',
+    )
+    lastname = models.CharField(
+        max_length=40,
+        verbose_name='Фамилия',
     )
     telegram_id = models.PositiveBigIntegerField(
         verbose_name='Telegram id',
         db_index=True,
     )
+
+    class Meta:
+        verbose_name = 'Участник'
+        verbose_name_plural = 'Участники'
+
+    def __str__(self):
+        return f'{self.firstname} {self.lastname}'
+
+
+class Student(Person):
+    LEVELS = [
+        ('1_newborn', 'Новички'),
+        ('2_newborn_plus', 'Новички+'),
+        ('3_junior', 'Джуны'),
+    ]
     level = models.CharField(
         verbose_name='Уровень',
         max_length=15,
@@ -33,25 +46,16 @@ class Student(models.Model):
         verbose_name_plural = 'Студенты'
 
     def __str__(self):
-        return f'{self.user.first_name} {self.user.last_name} - {self.level}'
+        return f'{self.firstname} {self.lastname} - {self.get_level_display()}'
 
 
-class Project_manager(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE
-    )
-    telegram_id = models.PositiveBigIntegerField(
-        verbose_name='Telegram id',
-        db_index=True,
-    )
-
+class Project_manager(Person):
     class Meta:
         verbose_name = 'Менеджер проектов'
         verbose_name_plural = 'Менеджеры проектов'
 
     def __str__(self):
-        return f'{self.user.first_name} {self.user.last_name}'
+        return f'{self.firstname} {self.lastname}'
 
 
 class Project(models.Model):
@@ -148,7 +152,7 @@ class StudentProjectWeek(models.Model):
         return f'{self.week}: {self.student.firstname} {self.student.lastname}'
 
 
-class StudentProjectSlots(models.Model):
+class StudentProjectSlot(models.Model):
     student = models.ForeignKey(
         StudentProjectWeek,
         verbose_name='Студент',
@@ -209,13 +213,11 @@ class StudentGroup(models.Model):
         Group,
         verbose_name='Группа',
         on_delete=models.PROTECT,
-        related_name='students',
     )
     student = models.ForeignKey(
         Student,
         verbose_name='Студент',
         on_delete=models.PROTECT,
-        related_name='groups',
     )
 
     class Meta:
