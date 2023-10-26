@@ -167,8 +167,8 @@ class StudentProjectSlot(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Расписание студента'
-        verbose_name_plural = 'Расписания студентов'
+        verbose_name = 'Слоты студента'
+        verbose_name_plural = 'Слоты студентов'
 
     def __str__(self):
         return f'{self.student.student.firstname} {self.student.student.lastname}: {self.slot}'
