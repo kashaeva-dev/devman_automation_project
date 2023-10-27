@@ -1,5 +1,7 @@
 import datetime
 import logging
+import random
+
 from environs import Env
 
 from django.core.management.base import BaseCommand
@@ -18,7 +20,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from groupsapp.models import Project_manager, Week, Timeslot, Group
+from groupsapp.models import Project_manager, Week, Timeslot, Group, Student, StudentProjectWeek, StudentProjectSlot
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
@@ -40,19 +42,32 @@ class Command(BaseCommand):
 
         def start_conversation(update, _):
             query = update.callback_query
+            logger.info(f'{query}')
             project_manager_ids = Project_manager.objects.values_list('telegram_id', flat=True)
             logger.info(f'{project_manager_ids}')
+
             if update.effective_chat.id in project_manager_ids:
                 text = 'ГЛАВНОЕ МЕНЮ:'
                 main_menu_keyboard = [
                     [
                         InlineKeyboardButton("Создать группы", callback_data='make_groups'),
                         InlineKeyboardButton("Посмотреть группы", callback_data='look_groups'),
+
                     ],
+                    [
+                        InlineKeyboardButton("Создать тестовые слоты для студентов",
+                                             callback_data='make_student_slots'),
+                    ]
                 ]
-                update.message.reply_text(
-                    text=text,
-                    reply_markup=InlineKeyboardMarkup(main_menu_keyboard),
+                if query:
+                    query.edit_message_text(
+                        text=text,
+                        reply_markup=InlineKeyboardMarkup(main_menu_keyboard),
+                )
+                else:
+                    update.message.reply_text(
+                        text=text,
+                        reply_markup=InlineKeyboardMarkup(main_menu_keyboard),
                     )
             else:
                 update.message.reply_text(
@@ -69,8 +84,9 @@ class Command(BaseCommand):
 
 
         def make_groups(update, _):
+            logger.info("Start make groups")
             query = update.callback_query
-            week = Week.objects.get(pk=3)
+            week = Week.objects.get(pk=4)
             project_manager = Project_manager.objects.prefetch_related('schedule').get(telegram_id=update.effective_chat.id)
             timeslots = Timeslot.objects.all()
             created_groups_count = 0
@@ -96,6 +112,51 @@ class Command(BaseCommand):
             return 'MAKE_GROUPS'
 
 
+        def make_student_slots(update, _):
+            logger.info('Start making student slots')
+            morning_intervals = {
+                '1': '07:00 - 09:00',
+                '2': '09:00 - 12:00',
+            }
+
+            evening_intervals = {
+                '1': '14:00 - 17:00',
+                '2': '17:00 - 20:00',
+                '3': '20:00 - 23:00',
+            }
+            text = '14:00 - 17:00'.split(' - ')
+            students = StudentProjectWeek.objects.select_related('student').all()
+            timeslots = Timeslot.objects.all()
+            student_slots_created = 0
+            for student in students:
+                if student.student.location_FE:
+                    choosen_interval = morning_intervals[random.choice(list(morning_intervals))].split(' - ')
+                    interval_start_time = datetime.datetime.strptime(choosen_interval[0], '%H:%M').time()
+                    interval_end_time = datetime.datetime.strptime(choosen_interval[1], '%H:%M').time()
+                    for timeslot in timeslots:
+                        if timeslot.start_time >= interval_start_time and timeslot.end_time <= interval_end_time:
+                            slot, created = StudentProjectSlot.objects.get_or_create(
+                                student=student,
+                                slot=timeslot,
+                            )
+                            if created:
+                                student_slots_created += 1
+                else:
+                    choosen_interval = evening_intervals[random.choice(list(evening_intervals))].split(' - ')
+                    interval_start_time = datetime.datetime.strptime(choosen_interval[0], '%H:%M').time()
+                    interval_end_time = datetime.datetime.strptime(choosen_interval[1], '%H:%M').time()
+                    for timeslot in timeslots:
+                        if timeslot.start_time >= interval_start_time and timeslot.end_time <= interval_end_time:
+                            slot, created = StudentProjectSlot.objects.get_or_create(
+                                student=student,
+                                slot=timeslot,
+                            )
+                            if created:
+                                student_slots_created += 1
+
+            return 'MAKE_STUDENT_SLOTS'
+
+
         def cancel(update, _):
             update.message.reply_text(
                 'До новых встреч',
@@ -110,9 +171,16 @@ class Command(BaseCommand):
             states={
                 'MAIN_MENU': [
                     CallbackQueryHandler(make_groups, pattern='make_groups'),
+                    CallbackQueryHandler(make_student_slots, pattern='make_student_slots'),
+                    CommandHandler('start', start_conversation),
                 ],
                 'MAKE_GROUPS': [
                     CallbackQueryHandler(start_conversation, pattern='to_start'),
+                    CommandHandler('start', start_conversation),
+                ],
+                'MAKE_STUDENT_SLOTS': [
+                    CallbackQueryHandler(start_conversation, pattern='to_start'),
+                    CommandHandler('start', start_conversation),
                 ],
             },
             fallbacks=[CommandHandler('cancel', cancel)],
