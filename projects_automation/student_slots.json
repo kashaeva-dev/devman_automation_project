@@ -1,0 +1,16 @@
+[
+  {"model": "groupsapp.studentprojectslot", "pk": 1, "fields": {"student": 1, "slot": 33}},
+  {"model": "groupsapp.studentprojectslot", "pk": 2, "fields": {"student": 1, "slot": 34}},
+  {"model": "groupsapp.studentprojectslot", "pk": 3, "fields": {"student": 1, "slot": 35}},
+  {"model": "groupsapp.studentprojectslot", "pk": 4, "fields": {"student": 1, "slot": 36}},
+  {"model": "groupsapp.studentprojectslot", "pk": 5, "fields": {"student": 1, "slot": 37}},
+  {"model": "groupsapp.studentprojectslot", "pk": 6, "fields": {"student": 1, "slot": 38}},
+  {"model": "groupsapp.studentprojectslot", "pk": 7, "fields": {"student": 1, "slot": 39}},
+  {"model": "groupsapp.studentprojectslot", "pk": 8, "fields": {"student": 1, "slot": 40}},
+  {"model": "groupsapp.studentprojectslot", "pk": 9, "fields": {"student": 2, "slot": 25}},
+  {"model": "groupsapp.studentprojectslot", "pk": 10, "fields": {"student": 2, "slot": 26}},
+  {"model": "groupsapp.studentprojectslot", "pk": 11, "fields": {"student": 2, "slot": 27}},
+  {"model": "groupsapp.studentprojectslot", "pk": 12, "fields": {"student": 2, "slot": 28}},
+  {"model": "groupsapp.studentprojectslot", "pk": 13, "fields": {"student": 2, "slot": 29}},
+  {"model": "groupsapp.studentprojectslot", "pk": 14, "fields": {"student": 2, "slot": 30}}
+]
