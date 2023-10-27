@@ -175,8 +175,8 @@ class StudentProjectSlot(models.Model):
 
 
 class Group(models.Model):
-    project = models.ForeignKey(
-        Project,
+    week = models.ForeignKey(
+        Week,
         verbose_name='Проект',
         on_delete=models.PROTECT,
         related_name='groups',

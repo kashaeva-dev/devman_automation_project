@@ -15,6 +15,26 @@ from .models import (
     Group,
     StudentGroup,
 )
+from django.utils.translation import gettext_lazy as _
+class ByLevelFilter(admin.SimpleListFilter):
+    title = _('Уровень')
+    parameter_name = 'student'
+
+    def lookups(self, request, model_admin):
+
+        filters = [
+            ('1_newborn', 'Новички'),
+            ('2_newborn_plus', 'Новички+'),
+            ('3_junior', 'Джуны'),
+        ]
+
+        return filters if filters else None
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(student__in=Student.objects.filter(level=self.value()))
+        else:
+            return queryset
 
 
 @admin.register(Person)
@@ -23,7 +43,9 @@ class PersonAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    pass
+    list_filter = (
+        'level',
+    )
 
 
 @admin.register(Project_manager)
@@ -53,7 +75,10 @@ class PMScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(StudentProjectWeek)
 class StudentProjectWeekAdmin(admin.ModelAdmin):
-    pass
+    list_filter = (
+        ByLevelFilter,
+        'week',
+    )
 
 
 @admin.register(StudentProjectSlot)
