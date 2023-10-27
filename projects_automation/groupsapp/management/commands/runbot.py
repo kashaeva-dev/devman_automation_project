@@ -18,7 +18,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from groupsapp.models import Project_manager, Week, Timeslot
+from groupsapp.models import Project_manager, Week, Timeslot, Group
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
@@ -69,15 +69,55 @@ class Command(BaseCommand):
 
 
         def make_groups(update, _):
+            query = update.callback_query
             week = Week.objects.get(pk=3)
-            project_manager = Project_manager.objects.select_related('schedule').get(telegram_id=update.effective_chat.id)
+            project_manager = Project_manager.objects.prefetch_related('schedule').get(telegram_id=update.effective_chat.id)
             timeslots = Timeslot.objects.all()
-            for schedule in project_manager.schedule:
+            created_groups_count = 0
+            for schedule in project_manager.schedule.all():
                 for timeslot in timeslots:
                     if timeslot.start_time >= schedule.start_time and timeslot.end_time <= schedule.end_time:
-                        pass
+                        group, created = Group.objects.get_or_create(
+                            week=week,
+                            timeslot=timeslot,
+                            project_manager=project_manager,
+                        )
+                        if created:
+                            created_groups_count += 1
+            keyboard = [
+                [InlineKeyboardButton("На главный", callback_data="to_start")]
+                ]
+            query.edit_message_text(
+                text=f'Было создано {created_groups_count} групп',
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            query.answer()
+
+            return 'MAKE_GROUPS'
 
 
+        def cancel(update, _):
+            update.message.reply_text(
+                'До новых встреч',
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            return ConversationHandler.END
+
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler('start', start_conversation),
+                          CallbackQueryHandler(start_conversation, pattern='to_start'),
+                          ],
+            states={
+                'MAIN_MENU': [
+                    CallbackQueryHandler(make_groups, pattern='make_groups'),
+                ],
+                'MAKE_GROUPS': [
+                    CallbackQueryHandler(start_conversation, pattern='to_start'),
+                ],
+            },
+            fallbacks=[CommandHandler('cancel', cancel)],
+        )
+        dispatcher.add_handler(conv_handler)
         start_handler = CommandHandler('start', start_conversation)
         dispatcher.add_handler(start_handler)
         updater.start_polling()

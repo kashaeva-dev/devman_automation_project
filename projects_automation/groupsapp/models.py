@@ -205,7 +205,7 @@ class Group(models.Model):
         verbose_name_plural = 'Группы'
 
     def __str__(self):
-        return f'{self.project} - {self.project_manager.lastname} - {self.timeslot}'
+        return f'{self.week} - {self.project_manager.lastname} - {self.timeslot}'
 
 
 class StudentGroup(models.Model):
