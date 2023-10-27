@@ -16,6 +16,10 @@ from .models import (
     StudentGroup,
 )
 from django.utils.translation import gettext_lazy as _
+
+from import_export.admin import ImportExportModelAdmin
+
+
 class ByLevelFilter(admin.SimpleListFilter):
     title = _('Уровень')
     parameter_name = 'student'
@@ -38,43 +42,43 @@ class ByLevelFilter(admin.SimpleListFilter):
 
 
 @admin.register(Person)
-class PersonAdmin(admin.ModelAdmin):
+class PersonAdmin(ImportExportModelAdmin):
     pass
 
 @admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
+class StudentAdmin(ImportExportModelAdmin):
     list_filter = (
         'level',
     )
 
 
 @admin.register(Project_manager)
-class Project_managerAdmin(admin.ModelAdmin):
+class Project_managerAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(Week)
-class WeekAdmin(admin.ModelAdmin):
+class WeekAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(Timeslot)
-class TimeslotAdmin(admin.ModelAdmin):
+class TimeslotAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(PMSchedule)
-class PMScheduleAdmin(admin.ModelAdmin):
+class PMScheduleAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(StudentProjectWeek)
-class StudentProjectWeekAdmin(admin.ModelAdmin):
+class StudentProjectWeekAdmin(ImportExportModelAdmin):
     list_filter = (
         ByLevelFilter,
         'week',
@@ -82,15 +86,15 @@ class StudentProjectWeekAdmin(admin.ModelAdmin):
 
 
 @admin.register(StudentProjectSlot)
-class StudentProjectSlotAdmin(admin.ModelAdmin):
+class StudentProjectSlotAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(Group)
-class GroupAdmin(admin.ModelAdmin):
+class GroupAdmin(ImportExportModelAdmin):
     pass
 
 
 @admin.register(StudentGroup)
-class StudentGroupAdmin(admin.ModelAdmin):
+class StudentGroupAdmin(ImportExportModelAdmin):
     pass
