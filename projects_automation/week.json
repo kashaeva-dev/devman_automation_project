@@ -1,0 +1,1 @@
+[{"model": "groupsapp.week", "pk": 1, "fields": {"start_date": "2023-09-19", "project": 1}}, {"model": "groupsapp.week", "pk": 2, "fields": {"start_date": "2023-09-26", "project": 1}}, {"model": "groupsapp.week", "pk": 3, "fields": {"start_date": "2023-11-21", "project": 2}}, {"model": "groupsapp.week", "pk": 4, "fields": {"start_date": "2023-11-28", "project": 2}}]
