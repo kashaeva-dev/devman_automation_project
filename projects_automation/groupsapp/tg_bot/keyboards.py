@@ -10,19 +10,14 @@ ADD_SLOT_BUTTON = InlineKeyboardButton('Добавить слот', callback_dat
 
 TIMESLOT_BUTTONS = [
     [
-        InlineKeyboardButton('7:00', callback_data='7:00'),
-        InlineKeyboardButton('7:20', callback_data='7:20'),
-        InlineKeyboardButton('7:40', callback_data='7:40')
+        InlineKeyboardButton('7:00 - 10:00', callback_data='7:00 - 10:00'),
+        InlineKeyboardButton('14:00 - 17:00', callback_data='14:00 - 17:00'),
+        InlineKeyboardButton('17:00 - 20:00', callback_data='17:00 - 20:00'),
     ],
-    [
-        InlineKeyboardButton('8:00', callback_data='8:00'),
-        InlineKeyboardButton('8:20', callback_data='8:20'),
-        InlineKeyboardButton('8:40', callback_data='8:40')
-     ],
 ]
-MANUAL_BUTTON = InlineKeyboardButton('Указать вручную', callback_data='manual')
 BACK_BUTTON = InlineKeyboardButton('Отмена', callback_data='back')
-CANCELL_BUTTON =  InlineKeyboardButton('Отменить участие в проекте', callback_data='back')
+CANCELL_BUTTON = InlineKeyboardButton('Отменить участие в проекте', callback_data='quit')
+DONE_BUTTON = InlineKeyboardButton('Готово', callback_data='done')
 
 
 def get_start_keyboard():
@@ -58,11 +53,21 @@ def get_schedule_keyboard():
     return InlineKeyboardMarkup(keyboard)
 
 
-def get_slots_keyboard(start=''):
-    slot_buttons = TIMESLOT_BUTTONS
-    slot_buttons.append([MANUAL_BUTTON])
-    slot_buttons.append([BACK_BUTTON])
-    keyboard = slot_buttons
+def get_slots_keyboard():
+    keyboard = TIMESLOT_BUTTONS
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_slot_chosen_keyboard():
+    keyboard = [
+        [
+            ADD_SLOT_BUTTON,
+        ],
+        [
+            DONE_BUTTON,
+        ],
+    ]
 
     return InlineKeyboardMarkup(keyboard)
 

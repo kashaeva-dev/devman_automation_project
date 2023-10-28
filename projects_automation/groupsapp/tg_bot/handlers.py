@@ -12,8 +12,6 @@ HELLO = 1  # projects is coming
 SCHEDULE = 2  # add slots or choose any time
 SLOTS = 3  # choose starting time for the slot
 FINAL = 4  # choose ending time for the slot
-SLOT_CHOSEN = 5  # another slot or ready?
-READY = 6
 
 
 def start(update: Update, context: CallbackContext):
@@ -53,6 +51,8 @@ def schedule_keyboard_handler(update: Update, context: CallbackContext):
     chat_id = update.effective_message.chat_id
     current_text = update.effective_message.text
 
+    context.user_data['slots'] = []
+
     query.edit_message_text(text=current_text)
     context.bot.send_message(chat_id=chat_id,
                              text='Время для созвонов:\n\n '
@@ -72,27 +72,66 @@ def slots_keyboard_handler(update: Update, context: CallbackContext):
 
     query.edit_message_text(text=current_text)
     if data == 'any_time':
+        # TODO: set all possible slots as chosen
         context.bot.send_message(chat_id=chat_id,
                                  text='Составы команд, бриф и все остальное пришлю в следующий понедельни.\n\n'
                                       'Пока почитай статью по командным проектам:\n'
                                       'https://dvmn.org/encyclopedia/team-projects/i-need-team-lead/.',
                                  reply_markup=keyboards.get_final_keyboard())
         return FINAL
-    elif data == 'add_slot' or data == 'back':
+
+    if data == 'done':
+        # TODO: set slots from context.user_data['slots'] as chosen for the user
         context.bot.send_message(chat_id=chat_id,
-                                 text='Выбери время начала слота\n\n'
-                                      'Готов созваниваться в промежутке с...',
-                                 reply_markup=keyboards.get_slots_keyboard())
+                                 text='Составы команд, бриф и все остальное пришлю в следующий понедельни.\n\n'
+                                      'Пока почитай статью по командным проектам:\n'
+                                      'https://dvmn.org/encyclopedia/team-projects/i-need-team-lead/.',
+                                 reply_markup=keyboards.get_final_keyboard())
+        return FINAL
+
+    if data == 'add_slot':
+        if not context.user_data['slots']:
+            context.bot.send_message(chat_id=chat_id,
+                                     text='Выбери слот для созвона:',
+                                     reply_markup=keyboards.get_slots_keyboard())
+        else:
+            query.edit_message_text(text=current_text,
+                                    reply_markup=keyboards.get_slots_keyboard())
+
     else:  # выбрано время
-        pass
+        context.user_data['slots'].append(data)
+        text = 'Выбранные слоты\n'
+        for i, slot in enumerate(context.user_data['slots']):
+            text = text + f'\nSlot {i+1}: {slot}'
+
+        query.edit_message_text(text=text,
+                                reply_markup=keyboards.get_slot_chosen_keyboard())
 
 
-def slots_final_handler(update: Update, context: CallbackContext):
+def final_keyboard_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
     chat_id = update.effective_message.chat_id
     current_text = update.effective_message.text
 
     query.edit_message_text(text=current_text)
+
+    if data == 'quit':
+        # TODO: remove all chosen slots and remove user from project if exists
+        context.bot.send_message(chat_id=chat_id,
+                                 text='Ваше участие в проекте отменено')
+        return ConversationHandler.END
+
+    if data != 'no' and data != 'quit':
+        context.user_data['new_slot'] = data
+
     context.bot.send_message(chat_id=chat_id,
-                             text='Ваше участие в проекте отменено')
+                             text='Спасибо!\n\n'
+                                  'Скоро пришлю расписание')
+
+
+def cancel_handler(update: Update, context: CallbackContext):
+    """ Отменить весь процесс диалога. Данные будут утеряны
+    """
+    update.message.reply_text('Отмена. Для начала с нуля введите /start')
+    return ConversationHandler.END

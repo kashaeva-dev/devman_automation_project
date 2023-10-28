@@ -30,10 +30,13 @@ def start_bot():
             ],
             handlers.SLOTS: [
                 CallbackQueryHandler(callback=handlers.slots_keyboard_handler, pass_chat_data=True)
+            ],
+            handlers.FINAL: [
+                CallbackQueryHandler(callback=handlers.final_keyboard_handler, pass_chat_data=True)
             ]
         },
         fallbacks=[
-            # CommandHandler('cancel', cancel_handler)
+            CommandHandler('cancel', handlers.cancel_handler)
         ]
     )
 
