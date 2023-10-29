@@ -5,7 +5,8 @@ from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.ext import ConversationHandler
 
-from projects_automation.groupsapp.tg_bot import keyboards
+from groupsapp.tg_bot import keyboards
+from groupsapp.tg_bot import bot_methods
 
 
 HELLO = 1  # projects is coming
@@ -32,13 +33,9 @@ def hello_keyboard_handler(update: Update, context: CallbackContext):
                              text='Привет!\n '
                                   'Наступает пора командных проектов. Будет вместо учебного плана.\n'
                                   'Будет что-то вроде урока на девмане, только без шагов, '
-                                  'зато втроём (очень редко вдвоем) + с ПМом.\n'
+                                  'зато втроём (очень редко вдвоем) + с ПМом.\n\n'
                                   'Созвоны будут по 20 минут каждый день в течение недели. '
-                                  'Быть у компьютера не обязательно.\n'
-                                  ''
-                                  'Слоты для созвонов:'
-                                  '09.00 - 13.00, 19.00 - 23.00 мск.'
-                                  ''
+                                  'Быть у компьютера не обязательно.\n\n'
                                   'Выбери удобное время для созвонов.',
                              reply_markup=keyboards.get_hello_keyboard())
 
@@ -54,11 +51,16 @@ def schedule_keyboard_handler(update: Update, context: CallbackContext):
     context.user_data['slots'] = []
 
     query.edit_message_text(text=current_text)
+
+    intervals = bot_methods.get_available_intervals()
+    interval_message = ''
+    for interval in intervals:
+        interval_name = bot_methods.interval_to_text(interval)
+        interval_message = interval_message + f'- {interval_name} мск\n'
     context.bot.send_message(chat_id=chat_id,
-                             text='Время для созвонов:\n\n '
-                                  '- 07.00 - 12.00 мск.\n'
-                                  '- 14.00 - 24.00 мск.\n\n'
-                                  'Выбери подходящее время',
+                             text=f'Время для созвонов:\n\n'
+                                  f'{interval_message}\n'
+                                  f'Выбери подходящее время',
                              reply_markup=keyboards.get_schedule_keyboard())
 
     return SLOTS

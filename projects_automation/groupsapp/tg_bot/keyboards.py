@@ -2,6 +2,8 @@ from datetime import datetime
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from groupsapp.tg_bot import bot_methods
+
 
 START_BUTTON = InlineKeyboardButton('Начать', callback_data='begin')
 CHOOSE_TIME_BUTTON = InlineKeyboardButton('Выбрать время', callback_data='choose_time')
@@ -54,7 +56,13 @@ def get_schedule_keyboard():
 
 
 def get_slots_keyboard():
-    keyboard = TIMESLOT_BUTTONS
+    intervals = bot_methods.get_available_intervals()
+    interval_buttons = []
+    for interval in intervals:
+        interval_name = bot_methods.interval_to_text(interval)
+        interval_button = InlineKeyboardButton(interval_name, callback_data=interval_name)
+        interval_buttons.append([interval_button])
+    keyboard = interval_buttons
 
     return InlineKeyboardMarkup(keyboard)
 
