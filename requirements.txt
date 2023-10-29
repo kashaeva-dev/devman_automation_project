@@ -1,4 +1,6 @@
 Django==4.2.6
+requests==2.31.0
 python-telegram-bot==13.2
 python-dotenv==1.0.0
 django-import-export==3.3.1
+
