@@ -37,6 +37,7 @@ def hello_keyboard_handler(update: Update, context: CallbackContext):
         message = 'Чего-то я не помню такого студента'
         context.bot.send_message(chat_id=chat_id,
                                  text=message,)
+        return ConversationHandler.END
 
     context.bot.send_message(chat_id=chat_id,
                              text='Привет!\n '
