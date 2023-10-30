@@ -97,26 +97,33 @@ class WeekAdmin(ImportExportModelAdmin):
     @admin.action(description='* создать Trello')
     def create_trello(self, request, queryset):
         """Возвращает id и ссылку на рабочее пространство в Trello"""
-        for obj in queryset:
-            if not obj.trello_id:
-                project_name = create_project_name(
-                    obj.project.name, obj.start_date, obj.end_date)
-                workspace = create_workspace(
-                    trello_key, trello_token, project_name)
-                obj.trello_link = workspace['url']
-                obj.trello_id = workspace['id']
-                obj.save()
+        try:
+            for obj in queryset:
+                if not obj.trello_id:
+                    project_name = create_project_name(
+                        obj.project.name, obj.start_date, obj.end_date)
+                    workspace = create_workspace(
+                        trello_key, trello_token, project_name)
+                    obj.trello_link = workspace['url']
+                    obj.trello_id = workspace['id']
+                    obj.save()
+        except Exception as e:
+            print(e)
+            pass
 
     @admin.action(description='* удалить Trello')
     def delete_workspace(self, request, queryset):
-        for obj in queryset:
-            if obj.trello_id:
-                delete_workspace(
-                    trello_key, trello_token,
-                    obj.trello_id)
-                obj.trello_link = ''
-                obj.trello_id = ''
-                obj.save()
+        """Удаляет рабочее пространство в Trello"""
+        try:
+            for obj in queryset:
+                if obj.trello_id:
+                    delete_board(trello_key, trello_token, obj.trello_id)
+                    obj.trello_link = ''
+                    obj.trello_id = ''
+                    obj.save()
+        except Exception as e:
+            print(e)
+            pass
 
 
 @admin.register(Timeslot)
@@ -163,36 +170,45 @@ class GroupAdmin(ImportExportModelAdmin):
 
     @admin.action(description='* создать доску')
     def create_ws_board(self, request, queryset):
-        for obj in queryset:
-            if not obj.week.trello_id:
-                continue
-            if not obj.trello_id:
-                calltime = time.strftime(obj.timeslot.start_time,
-                                         '%H:%M')
-                participants = ', '.join(
-                    obj.students.all().values_list(
-                        'lastname', flat=True))
-                board_name = (f'[{calltime}] '
-                              f'{obj.project_manager.lastname} '
-                              f'- {participants}')
-                board = create_board(
-                    trello_key, trello_token,
-                    ws_id=obj.week.trello_id,
-                    board_name=board_name,
-                    background='blue')
-                obj.trello_link = board['shortUrl']
-                obj.trello_id = board['id']
-                obj.save()
+        """Создает доску в Trello"""
+        try:
+            for obj in queryset:
+                if not obj.week.trello_id:
+                    continue
+                if not obj.trello_id:
+                    calltime = time.strftime(obj.timeslot.start_time,
+                                             '%H:%M')
+                    participants = ', '.join(
+                        obj.students.all().values_list(
+                            'lastname', flat=True))
+                    board_name = (f'[{calltime}] '
+                                  f'{obj.project_manager.lastname} '
+                                  f'- {participants}')
+                    board = create_board(
+                        trello_key, trello_token,
+                        ws_id=obj.week.trello_id,
+                        board_name=board_name,
+                        background='blue')
+                    obj.trello_link = board['shortUrl']
+                    obj.trello_id = board['id']
+                    obj.save()
+        except Exception as e:
+            print(e)
+            pass
 
     @admin.action(description='* удалить доску')
     def delete_ws_board(self, request, queryset):
-        for obj in queryset:
-            if obj.trello_id:
-                delete_board(
-                    trello_key, trello_token, obj.trello_id)
-                obj.trello_link = ''
-                obj.trello_id = ''
-                obj.save()
+        """Удаляет доску в Trello"""
+        try:
+            for obj in queryset:
+                if obj.trello_id:
+                    delete_board(trello_key, trello_token, obj.trello_id)
+                    obj.trello_link = ''
+                    obj.trello_id = ''
+                    obj.save()
+        except Exception as e:
+            print(e)
+            pass
 
     @admin.action(description='* отправить ссылку')
     def invite_members(self, request, queryset):
