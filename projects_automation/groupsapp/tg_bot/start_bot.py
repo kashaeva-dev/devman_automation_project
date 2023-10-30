@@ -1,25 +1,21 @@
-import os
-from dotenv import load_dotenv
 
 from telegram.ext import Updater
 from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandler
 from telegram.ext import MessageHandler, Filters
 
-from groupsapp.tg_bot import handlers
+from groupsapp.tg_bot import handlers, pm_handlers
 
 
-load_dotenv()
-
-TG_API_KEY = os.getenv('TG_API_KEY')
 
 
-def start_bot():
-    updater = Updater(token=TG_API_KEY, use_context=True)
+
+def start_bot(tg_key):
+    updater = Updater(token=tg_key, use_context=True)
     dispatcher = updater.dispatcher
 
-    conv_handler = ConversationHandler(
+    student_conv_handler = ConversationHandler(
         entry_points=[
-            CommandHandler('start', handlers.start)
+            CommandHandler('start', handlers.student_start)
         ],
         states={
             handlers.HELLO: [
@@ -40,7 +36,7 @@ def start_bot():
         ]
     )
 
-    dispatcher.add_handler(conv_handler)
+    dispatcher.add_handler(student_conv_handler)
 
     updater.start_polling()
     updater.idle()

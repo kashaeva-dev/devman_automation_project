@@ -1,4 +1,8 @@
 from datetime import time
+from dotenv import load_dotenv
+from telegram import Bot
+
+import os
 
 from django.db import models
 
@@ -108,6 +112,22 @@ class Week(models.Model):
 
     def __str__(self):
         return f'{self.start_date}'
+
+    def save(self, *args, **kwargs):
+        super(Week, self).save(*args, **kwargs)
+        load_dotenv()
+        tg_bot_key = os.getenv('TG_API_KEY')
+        bot = Bot(token=tg_bot_key)
+
+        if not self.actual:
+            return
+
+        students = Student.objects.all()
+
+        #for student in students:
+        #user_id = student.telegram_id
+        message = f'Настало время проектов. Чтобы выбрать себе удобное время для созвонов, введите /start'
+        bot.send_message(text=message, chat_id=380619656)
 
 
 class Timeslot(models.Model):
@@ -262,3 +282,12 @@ class StudentGroup(models.Model):
 
     def __str__(self):
         return f'{self.student}: {self.group}'
+
+    def save(self, *args, **kwargs):
+        super(StudentGroup, self).save(*args, **kwargs)
+        load_dotenv()
+        tg_bot_key = os.getenv('TG_API_KEY')
+        user_id = self.student.telegram_id
+        bot = Bot(token=tg_bot_key)
+        message = f'Вам назначили время проекта и ПМ-а: {self.group}'
+        bot.send_message(text=message, chat_id=user_id)
