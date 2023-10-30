@@ -124,10 +124,13 @@ class Week(models.Model):
 
         students = Student.objects.all()
 
-        #for student in students:
-        #user_id = student.telegram_id
-        message = f'Настало время проектов. Чтобы выбрать себе удобное время для созвонов, введите /start'
-        bot.send_message(text=message, chat_id=380619656)
+        for student in students:
+            user_id = student.telegram_id
+            message = f'Настало время проектов. Чтобы выбрать себе удобное время для созвонов, введите /start'
+            try:
+                bot.send_message(text=message, chat_id=user_id)
+            except:
+                pass
 
 
 class Timeslot(models.Model):

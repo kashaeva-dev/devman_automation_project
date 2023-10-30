@@ -82,6 +82,7 @@ def get_slots_from_interval(interval) -> django.db.models.QuerySet:
 def save_chosen_slots(student: Student, week: Week, slots: [Timeslot]):
     student_week, created = StudentProjectWeek.objects.get_or_create(week=week, student=student)
     student_slots = [StudentProjectSlot(student=student_week, slot=slot) for slot in slots]
+    StudentProjectSlot.objects.bulk_create(student_slots)
 
 
 def decline_student(student, week):
