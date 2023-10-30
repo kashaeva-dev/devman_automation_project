@@ -48,6 +48,7 @@ def start_bot():
             'MAIN_MENU': [
                 CallbackQueryHandler(pm_handlers.make_groups, pattern='make_groups'),
                 CallbackQueryHandler(pm_handlers.make_student_slots, pattern='make_student_slots'),
+                CallbackQueryHandler(pm_handlers.student_assignment, pattern='student_assignment'),
                 CommandHandler('start', pm_handlers.start_conversation),
             ],
             'MAKE_GROUPS': [
@@ -55,6 +56,10 @@ def start_bot():
                 CommandHandler('start', pm_handlers.start_conversation),
             ],
             'MAKE_STUDENT_SLOTS': [
+                CallbackQueryHandler(pm_handlers.start_conversation, pattern='to_start'),
+                CommandHandler('start', pm_handlers.start_conversation),
+            ],
+            'STUDENT_ASSIGNMENT': [
                 CallbackQueryHandler(pm_handlers.start_conversation, pattern='to_start'),
                 CommandHandler('start', pm_handlers.start_conversation),
             ],

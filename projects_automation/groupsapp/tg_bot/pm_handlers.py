@@ -19,8 +19,11 @@ from telegram.ext import (
     CallbackQueryHandler,
     ConversationHandler,
 )
+from django.db.models import Count, Subquery, OuterRef
+from django.db.models.functions import Coalesce
 
-from groupsapp.models import Project_manager, Week, Timeslot, Group, Student, StudentProjectWeek, StudentProjectSlot
+from groupsapp.models import Project_manager, Week, Timeslot, Group, Student, StudentProjectWeek, StudentProjectSlot,\
+    PMSchedule
 
 
 logging.basicConfig(
@@ -47,7 +50,11 @@ def start_conversation(update, _):
             [
                 InlineKeyboardButton("Создать тестовые слоты для студентов",
                                      callback_data='make_student_slots'),
-            ]
+            ],
+            [
+                InlineKeyboardButton("Назначить студентов в тестовые слоты",
+                                     callback_data='student_assignment'),
+            ],
         ]
         if query:
             query.edit_message_text(
@@ -153,3 +160,268 @@ def cancel(update, _):
         reply_markup=ReplyKeyboardRemove(),
     )
     return ConversationHandler.END
+
+
+def student_assignment(update, _):
+    def time_plus(time, timedelta):
+        start = datetime.datetime(
+            2000, 1, 1,
+            hour=time.hour, minute=time.minute, second=time.second)
+        end = start + timedelta
+        return end.time()
+
+    def time_minus(time, timedelta):
+        start = datetime.datetime(
+            2000, 1, 1,
+            hour=time.hour, minute=time.minute, second=time.second)
+        end = start - timedelta
+        return end.time()
+
+    week = Week.objects.get(pk=4)
+
+    evening_intervals = {
+        '1': '14:00 - 17:00',
+        '2': '17:00 - 20:00',
+        '3': '20:00 - 23:00',
+    }
+    for interval in ['1', '2', '3']:
+        current_groups = Group.objects.filter(
+            week=week,
+            timeslot__start_time__gte=datetime.datetime.strptime(evening_intervals[interval].split(' - ')[0],
+                                                                 '%H:%M').time(),
+            timeslot__end_time__lte=datetime.datetime.strptime(evening_intervals[interval].split(' - ')[1],
+                                                               '%H:%M').time()
+        ).count()
+        logger.info(f'{evening_intervals[interval]} доступно {current_groups} групп')
+
+    managers = PMSchedule.objects.order_by('start_time').all()
+    intersections = []
+    last_key = list(evening_intervals)[-1]
+    evening_intervals.pop(last_key)
+    logger.info(evening_intervals)
+    for interval in evening_intervals:
+        intersections.append(datetime.datetime.strptime(evening_intervals[interval].split(' - ')[1], '%H:%M').time()),
+    logger.info(intersections)
+
+    manager_intersactions = dict()
+    for intersection in intersections:
+        manager_intersactions[intersection] = []
+        for manager in managers:
+            if manager.start_time < intersection and manager.end_time > intersection:
+                manager_intersactions[intersection].append(manager)
+
+    logger.info(manager_intersactions)
+    levels = ['1_newborn', '2_newborn_plus']
+
+    for intersection in intersections:
+        logger.info(f'intersection: {intersection}')
+        for manager in manager_intersactions[intersection]:
+            logger.info(f'manager: {manager.project_manager}')
+            for direction in [1, 2]:
+                step = 1
+                timedelta = datetime.timedelta(minutes=0)
+                for level in levels:
+                    logger.info(f'level: {level}')
+                    if direction == 1:
+                        if timedelta == datetime.timedelta(minutes=0):
+                            timedelta = datetime.timedelta(minutes=20)
+                        logger.info(f'direction {direction}')
+                        start_time = intersection
+                        end_time = manager.start_time
+                        # добавляем к каждому слоту количество студентов, доступных в этот слот, за исключением студентов,
+                        # у которых уже есть группы, сортирую по возрастанию популярности (вначале менее популярные)
+                        slots = Timeslot.objects.annotate(
+                            students_count=Coalesce(Subquery(StudentProjectSlot.objects.filter(
+                                student__week=week,
+                                student__student__level=level,
+                                slot_id=OuterRef('id')
+                            ).exclude(
+                                student__student__in=Student.objects.prefetch_related('student_group').filter(
+                                    student_group__group__week=week,
+                                )).values('slot').annotate(count=Count('id')).values('count')[:1]
+                                                             ), 0
+                                                    )
+                        ).order_by('-start_time').filter(
+                            start_time__gte=end_time,
+                            end_time__lte=start_time,
+                            students_count__gt=1
+                        ).all()
+                        logger.info(f'slots: {slots}')
+                        available_groups = Group.objects.filter(
+                            week=week,
+                            timeslot__start_time__gte=end_time,
+                            timeslot__end_time__lte=start_time,
+                            project_manager=manager.project_manager,
+                        )
+                        logger.info(f'available_groups: {available_groups}')
+                        while slots and slots.first().students_count > 1 and available_groups:
+                            logger.info(f'step: {step}')
+                            logger.info(f'timedelta for {step}: {timedelta}')
+                            logger.info(f'количество студентов:{slots.first().students_count}')
+                            if slots.first().students_count > 5 or slots.first().students_count == 3:
+                                places = range(3)
+                            elif slots.first().students_count == 4 or slots.first().students_count == 2:
+                                places = range(2)
+                            else:
+                                logger.info('ELSE')
+                            slot_start_time = time_minus(start_time, timedelta)
+                            if slot_start_time < end_time:
+                                break
+                            logger.info(f'slot_start_time: {slot_start_time}')
+                            current_group = Group.objects.filter(
+                                week=week,
+                                timeslot__start_time=slot_start_time,
+                                project_manager=manager.project_manager,
+                                students__isnull=True,
+                            ).first()
+                            logger.info(f'current_group: {current_group}')
+                            available_students = StudentProjectSlot.objects.filter(
+                                slot__start_time=slot_start_time,
+                                student__week=week,
+                                student__student__level=level,
+                            ).exclude(
+                                student__student__in=Student.objects.prefetch_related(
+                                    'student_group').filter(
+                                    student_group__group__week=week,
+                                ))
+                            logger.info(f'available_students: {available_students}')
+                            for place in places:
+                                if current_group:
+                                    available_students = StudentProjectSlot.objects.filter(
+                                        slot__start_time=slot_start_time,
+                                        student__week=week,
+                                        student__student__level=level,
+                                    ).exclude(
+                                        student__student__in=Student.objects.prefetch_related(
+                                            'student_group').filter(
+                                            student_group__group__week=week,
+                                        ))
+                                    logger.info(f'available_students_count: {available_students.count()}')
+                                    student = random.choice(available_students)
+                                    current_group.students.add(student.student.student)
+
+                            timedelta += datetime.timedelta(minutes=20)
+                            logger.info(f'new_timedelta: {timedelta}')
+                            step += 1
+                            slots = Timeslot.objects.annotate(
+                                students_count=Coalesce(Subquery(StudentProjectSlot.objects.filter(
+                                    student__week=week,
+                                    student__student__level=level,
+                                    slot_id=OuterRef('id')
+                                ).exclude(
+                                    student__student__in=Student.objects.prefetch_related(
+                                        'student_group').filter(
+                                        student_group__group__week=week,
+                                    )).values('slot').annotate(count=Count('id')).values('count')[:1]
+                                                                 ), 0
+                                                        )
+                            ).order_by('-start_time').filter(
+                                start_time__gte=end_time,
+                                end_time__lte=start_time,
+                                students_count__gt=1
+                            ).all()
+                            logger.info(f'slots for step {step}: {slots}')
+                            available_groups = Group.objects.filter(
+                                week=week,
+                                timeslot__start_time__gte=end_time,
+                                timeslot__end_time__lte=start_time,
+                                project_manager=manager.project_manager,
+                                students__isnull=True,
+                            )
+                            logger.info(f'available_groups for step {step}: {available_groups}')
+                    if direction == 2:
+                        logger.info(f'direction {direction}')
+                        start_time = intersection
+                        end_time = manager.end_time
+                        slots = Timeslot.objects.annotate(
+                            students_count=Coalesce(Subquery(StudentProjectSlot.objects.filter(
+                                student__week=week,
+                                student__student__level=level,
+                                slot_id=OuterRef('id')
+                            ).exclude(
+                                student__student__in=Student.objects.prefetch_related('student_group').filter(
+                                    student_group__group__week=week,
+                                )).values('slot').annotate(count=Count('id')).values('count')[:1]
+                                                             ), 0
+                                                    )
+                        ).order_by('-start_time').filter(
+                            start_time__gte=start_time,
+                            end_time__lte=end_time,
+                            students_count__gt=1
+                        ).all()
+                        logger.info(f'slots: {slots}')
+                        available_groups = Group.objects.filter(
+                            week=week,
+                            timeslot__start_time__gte=start_time,
+                            timeslot__end_time__lte=end_time,
+                            project_manager=manager.project_manager,
+                        )
+                        logger.info(f'available_groups: {available_groups}')
+                        while slots and slots.first().students_count > 1 and available_groups:
+                            logger.info(f'step: {step}')
+                            logger.info(f'timedelta for {step}: {timedelta}')
+                            logger.info(f'количество студентов:{slots.first().students_count}')
+                            if slots.first().students_count > 5 or slots.first().students_count == 3:
+                                places = range(3)
+                            elif slots.first().students_count == 4 or slots.first().students_count == 2:
+                                places = range(2)
+                            else:
+                                logger.info('ELSE')
+                            slot_start_time = time_plus(start_time, timedelta)
+                            if slot_start_time >= end_time:
+                                break
+                            logger.info(f'slot_start_time: {slot_start_time}')
+                            current_group = Group.objects.filter(
+                                week=week,
+                                timeslot__start_time=slot_start_time,
+                                project_manager=manager.project_manager,
+                                students__isnull=True,
+                            ).first()
+                            logger.info(f'current_group: {current_group}')
+
+                            for place in places:
+                                if current_group:
+                                    available_students = StudentProjectSlot.objects.filter(
+                                        slot__start_time=slot_start_time,
+                                        student__week=week,
+                                        student__student__level=level,
+                                    ).exclude(
+                                        student__student__in=Student.objects.prefetch_related(
+                                            'student_group').filter(
+                                            student_group__group__week=week,
+                                        ))
+                                    logger.info(f'available_students: {available_students}')
+                                    student = random.choice(available_students)
+                                    current_group.students.add(student.student.student)
+
+                            timedelta += datetime.timedelta(minutes=20)
+                            logger.info(f'new_timedelta: {timedelta}')
+                            step += 1
+                            slots = Timeslot.objects.annotate(
+                                students_count=Coalesce(Subquery(StudentProjectSlot.objects.filter(
+                                    student__week=week,
+                                    student__student__level=level,
+                                    slot_id=OuterRef('id')
+                                ).exclude(
+                                    student__student__in=Student.objects.prefetch_related(
+                                        'student_group').filter(
+                                        student_group__group__week=week,
+                                    )).values('slot').annotate(count=Count('id')).values('count')[:1]
+                                                                 ), 0
+                                                        )
+                            ).order_by('-start_time').filter(
+                                start_time__gte=start_time,
+                                end_time__lte=end_time,
+                                students_count__gt=1
+                            ).all()
+                            logger.info(f'slots for step {step}: {slots}')
+                            available_groups = Group.objects.filter(
+                                week=week,
+                                timeslot__start_time__gte=start_time,
+                                timeslot__end_time__lte=end_time,
+                                project_manager=manager.project_manager,
+                                students__isnull=True,
+                            )
+                            logger.info(f'available_groups for step {step}: {available_groups}')
+
+    return 'STUDENT_ASSIGNMENT'
