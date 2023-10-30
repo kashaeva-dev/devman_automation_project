@@ -4,12 +4,9 @@ from datetime import datetime
 import requests
 
 
-# from django.conf.settings import TRELLO_API_KEY, TRELLO_API_TOKEN
-
-
-def create_project_name_from_db(title, start_date, end_date):
-    start_date = datetime.strptime(start_date, '%Y-%m-%d').strftime('%d.%m.%Y')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d').strftime('%d.%m.%Y')
+def create_project_name(title, start_date, end_date):
+    start_date = datetime.strftime(start_date, '%d.%m.%Y')
+    end_date = datetime.strftime(end_date, '%d.%m.%Y')
     project_name = f'Проект: {title} [{start_date}-{end_date}]'
     return project_name
 
@@ -45,35 +42,6 @@ def delete_workspace(key, token, ws_id):
     return
 
 
-def get_boards_name_and_url_from_workspace(key, token, ws_id):
-    """
-    Получает список имен, ссылок и id досок в рабочем пространстве.
-    Пример вывода:
-    [
-        [
-            'Моя доска Trello',
-            'https://trello.com/b/B8iqHlo8',
-            '653cf233004d3bf8ff8054c2'
-        ],
-    ]
-    """
-    url = f'https://api.trello.com/1/organizations/{ws_id}/boards'
-    headers = {
-        'Accept': 'application/json',
-    }
-    query = {
-        'key': key,
-        'token': token,
-    }
-    response = requests.get(url, headers=headers, params=query)
-    response.raise_for_status()
-    urls = [
-        [
-            board['name'], board['shortUrl'], board['id']
-        ] for board in response.json()]
-    return urls
-
-
 def create_board(key, token, ws_id, board_name, background='blue'):
     """Создает в Trello новую доску с указанным названием."""
     url = 'https://api.trello.com/1/boards'
@@ -99,32 +67,6 @@ def delete_board(key, token, board_id):
     response = requests.delete(url, params=query)
     response.raise_for_status()
     return response.status_code
-
-
-def get_board_about(key, token, board_id):
-    url = f'https://api.trello.com/1/boards/{board_id}'
-    headers = {
-        'Accept': 'application/json',
-    }
-    query = {
-        'key': key,
-        'token': token,
-        'members': 'all',
-    }
-    response = requests.get(url, headers=headers, params=query)
-    response.raise_for_status()
-    return response.json()
-
-
-def get_members_of_board(key, token, board_id):
-    url = f'https://api.trello.com/1/boards/{board_id}/members'
-    query = {
-        'key': key,
-        'token': token,
-    }
-    response = requests.get(url, params=query)
-    response.raise_for_status()
-    return response.json()
 
 
 def invite_member_to_board_via_email(
