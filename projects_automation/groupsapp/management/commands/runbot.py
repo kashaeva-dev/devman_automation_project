@@ -84,12 +84,6 @@ class Command(BaseCommand):
             return 'MAIN_MENU'
 
 
-        # def choose_week(update, _):
-        #     query = update.callback_query
-        #     today = datetime.date.today()
-        #     weeks = Week.objects.filter(start_date__gt=today)
-
-
         def make_groups(update, _):
             logger.info("Start make groups")
             query = update.callback_query
