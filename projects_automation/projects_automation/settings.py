@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$z3=m26g6x&t3onby=y-qt_q_#&dd&!&b)qym^27z(g2vegqsf'
+SECRET_KEY = env.str('SECRET_KEY', 'REPLACE_ME')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', True)
@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'import_export',
 ]
 
@@ -117,16 +116,20 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-if __name__=="__main__":
-    print(BASE_DIR)
+TRELLO_API_KEY = env.str('TRELLO_API_KEY')
+TRELLO_API_TOKEN = env.str('TRELLO_API_TOKEN')
+
+DATETIME_FORMAT = 'Y-m-d H:i:s'
+DATETIME_INPUT_FORMATS = ['%d-%m-%Y %H:%M:%S',]
