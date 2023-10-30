@@ -5,7 +5,7 @@ from telegram.ext import Updater
 from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandler
 from telegram.ext import MessageHandler, Filters
 
-from groupsapp.tg_bot import handlers
+from groupsapp.tg_bot import handlers, pm_handlers
 
 
 load_dotenv()
@@ -17,9 +17,9 @@ def start_bot():
     updater = Updater(token=TG_API_KEY, use_context=True)
     dispatcher = updater.dispatcher
 
-    conv_handler = ConversationHandler(
+    student_conv_handler = ConversationHandler(
         entry_points=[
-            CommandHandler('start', handlers.start)
+            CommandHandler('student', handlers.student_start)
         ],
         states={
             handlers.HELLO: [
@@ -40,7 +40,30 @@ def start_bot():
         ]
     )
 
-    dispatcher.add_handler(conv_handler)
+    pm_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', pm_handlers.start_conversation),
+                      CallbackQueryHandler(pm_handlers.start_conversation, pattern='to_start'),
+                      ],
+        states={
+            'MAIN_MENU': [
+                CallbackQueryHandler(pm_handlers.make_groups, pattern='make_groups'),
+                CallbackQueryHandler(pm_handlers.make_student_slots, pattern='make_student_slots'),
+                CommandHandler('start', pm_handlers.start_conversation),
+            ],
+            'MAKE_GROUPS': [
+                CallbackQueryHandler(pm_handlers.start_conversation, pattern='to_start'),
+                CommandHandler('start', pm_handlers.start_conversation),
+            ],
+            'MAKE_STUDENT_SLOTS': [
+                CallbackQueryHandler(pm_handlers.start_conversation, pattern='to_start'),
+                CommandHandler('start', pm_handlers.start_conversation),
+            ],
+        },
+        fallbacks=[CommandHandler('cancel', pm_handlers.cancel)],
+    )
+
+    dispatcher.add_handler(student_conv_handler)
+    dispatcher.add_handler(pm_conv_handler)
 
     updater.start_polling()
     updater.idle()

@@ -11,13 +11,13 @@ from groupsapp.tg_bot import bot_methods
 from groupsapp.models import Project_manager, Week
 
 
-HELLO = 1  # projects is coming
-SCHEDULE = 2  # add slots or choose any time
-SLOTS = 3  # choose starting time for the slot
-FINAL = 4  # choose ending time for the slot
+HELLO = 1
+SCHEDULE = 2
+SLOTS = 3
+FINAL = 4
 
 
-def start(update: Update, context: CallbackContext):
+def student_start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Привет! Проверим хендлер?",
                              reply_markup=keyboards.get_start_keyboard())
