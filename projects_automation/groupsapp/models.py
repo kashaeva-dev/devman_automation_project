@@ -1,5 +1,7 @@
+from datetime import time
+
 from django.db import models
-from django.contrib.auth.models import User
+
 
 class Person(models.Model):
     firstname = models.CharField(
@@ -14,6 +16,11 @@ class Person(models.Model):
         verbose_name='Telegram id',
         db_index=True,
     )
+    email = models.EmailField(
+        verbose_name='Email')
+    trello_id = models.CharField(
+        max_length=100, verbose_name='ID Trello',
+        blank=True)
 
     class Meta:
         verbose_name = 'Участник'
@@ -76,6 +83,9 @@ class Week(models.Model):
     start_date = models.DateField(
         verbose_name='Дата начала',
     )
+    end_date = models.DateField(
+        verbose_name='Дата окончания'
+    )
     project = models.ForeignKey(
         Project,
         verbose_name='Проект',
@@ -86,6 +96,11 @@ class Week(models.Model):
         verbose_name='Идёт набор команд',
         default=False,
     )
+    trello_link = models.URLField(
+        verbose_name='Ссылка на Trello', blank=True)
+    trello_id = models.CharField(
+        max_length=100, verbose_name='ID Trello',
+        blank=True)
 
     class Meta:
         verbose_name = 'Неделя'
@@ -93,7 +108,6 @@ class Week(models.Model):
 
     def __str__(self):
         return f'{self.start_date}'
-
 
 
 class Timeslot(models.Model):
@@ -109,7 +123,9 @@ class Timeslot(models.Model):
         verbose_name_plural = 'Временные слоты'
 
     def __str__(self):
-        return f'{self.pk}: {self.start_time} - {self.end_time}'
+        start = time.strftime(self.start_time, '%H:%M')
+        end = time.strftime(self.end_time, '%H:%M')
+        return f'{self.pk}: {start} - {end}'
 
 
 class PMSchedule(models.Model):
@@ -153,7 +169,9 @@ class StudentProjectWeek(models.Model):
         verbose_name_plural = 'Студенты по неделям'
 
     def __str__(self):
-        return f'{self.pk}: {self.week}: {self.student.firstname} {self.student.lastname}'
+        student = (self.student.firstname +
+                   ' ' + self.student.lastname)
+        return f'{self.pk}: {self.week}: {student}'
 
 
 class StudentProjectSlot(models.Model):
@@ -175,7 +193,10 @@ class StudentProjectSlot(models.Model):
         verbose_name_plural = 'Слоты студентов'
 
     def __str__(self):
-        return f'{self.student.student.firstname} {self.student.student.lastname}: {self.slot}'
+        student = (self.student.student.firstname +
+                   ' ' + self.student.student.lastname)
+        slot = self.slot
+        return f'{student}: {slot}'
 
 
 class Group(models.Model):
@@ -203,13 +224,22 @@ class Group(models.Model):
         on_delete=models.PROTECT,
         related_name='groups',
     )
+    trello_link = models.URLField(
+        verbose_name='Ссылка на Trello', blank=True)
+    trello_id = models.CharField(
+        max_length=100, verbose_name='ID Trello',
+        blank=True)
 
     class Meta:
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
 
     def __str__(self):
-        return f'{self.week} - {self.project_manager.lastname} - {self.timeslot}'
+        project = self.week.project.name
+        start = self.week.start_date
+        manager = self.project_manager.lastname
+        timeslot = self.timeslot
+        return f'{project} ({start}) - {manager} - {timeslot}'
 
 
 class StudentGroup(models.Model):
