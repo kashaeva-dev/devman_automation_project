@@ -5,7 +5,7 @@ from telegram.ext import Updater
 from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandler
 from telegram.ext import MessageHandler, Filters
 
-from projects_automation.groupsapp.tg_bot import handlers
+from groupsapp.tg_bot import handlers
 
 
 load_dotenv()
