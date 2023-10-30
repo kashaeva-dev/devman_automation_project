@@ -10,13 +10,6 @@ CHOOSE_TIME_BUTTON = InlineKeyboardButton('Выбрать время', callback_
 ANY_TIME_BUTTON = InlineKeyboardButton('В любое время', callback_data='any_time')
 ADD_SLOT_BUTTON = InlineKeyboardButton('Добавить слот', callback_data='add_slot')
 
-TIMESLOT_BUTTONS = [
-    [
-        InlineKeyboardButton('7:00 - 10:00', callback_data='7:00 - 10:00'),
-        InlineKeyboardButton('14:00 - 17:00', callback_data='14:00 - 17:00'),
-        InlineKeyboardButton('17:00 - 20:00', callback_data='17:00 - 20:00'),
-    ],
-]
 BACK_BUTTON = InlineKeyboardButton('Отмена', callback_data='back')
 CANCELL_BUTTON = InlineKeyboardButton('Отменить участие в проекте', callback_data='quit')
 DONE_BUTTON = InlineKeyboardButton('Готово', callback_data='done')
@@ -55,13 +48,19 @@ def get_schedule_keyboard():
     return InlineKeyboardMarkup(keyboard)
 
 
-def get_slots_keyboard():
+def get_slots_keyboard(chosen_slots):
     intervals = bot_methods.get_available_intervals()
     interval_buttons = []
     for interval in intervals:
         interval_name = bot_methods.interval_to_text(interval)
+        if interval_name in chosen_slots:
+            continue
         interval_button = InlineKeyboardButton(interval_name, callback_data=interval_name)
         interval_buttons.append([interval_button])
+
+    if not interval_buttons:
+        interval_buttons.append([InlineKeyboardButton('Интервалы закончились. Продолжить', callback_data='any_time')])
+
     keyboard = interval_buttons
 
     return InlineKeyboardMarkup(keyboard)

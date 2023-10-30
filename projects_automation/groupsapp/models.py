@@ -82,6 +82,10 @@ class Week(models.Model):
         on_delete=models.PROTECT,
         related_name='weeks',
     )
+    actual = models.BooleanField(
+        verbose_name='Идёт набор команд',
+        default=False,
+    )
 
     class Meta:
         verbose_name = 'Неделя'
