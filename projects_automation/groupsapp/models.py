@@ -125,7 +125,7 @@ class Timeslot(models.Model):
     def __str__(self):
         start = time.strftime(self.start_time, '%H:%M')
         end = time.strftime(self.end_time, '%H:%M')
-        return f'{self.pk}: {start} - {end}'
+        return f'{start} - {end}'
 
 
 class PMSchedule(models.Model):

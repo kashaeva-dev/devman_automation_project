@@ -52,6 +52,23 @@ class ByLevelFilter(admin.SimpleListFilter):
         return queryset
 
 
+class NotEmptyGroupFilter(admin.SimpleListFilter):
+    title = _('Наполненность')
+    parameter_name = 'students'
+
+    def lookups(self, request, model_admin):
+        filters = [
+            (1, 'Да'),
+            (0, 'Нет'),
+        ]
+        return filters if filters else None
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(students__isnull=bool(self.value()))
+        else:
+            return queryset
+
 
 class ByLevelStudentSlotFilter(admin.SimpleListFilter):
     title = _('Уровень')
@@ -198,7 +215,7 @@ class StudentProjectSlotAdmin(ImportExportModelAdmin):
 class GroupAdmin(ImportExportModelAdmin):
     list_display = ['week', 'timeslot', 'project_manager', 'get_trello_link']
     readonly_fields = ['trello_link']
-    list_filter = ['project_manager']
+    list_filter = [NotEmptyGroupFilter, 'project_manager', 'week']
     list_per_page = 20
     actions = ['create_ws_board', 'invite_members',
                'delete_ws_board']

@@ -113,6 +113,43 @@ class Command(BaseCommand):
             return 'MAKE_GROUPS'
 
 
+        def look_groups(update, _):
+            logger.info('Start looking groups')
+            query = update.callback_query
+            project_manager = Project_manager.objects.get(
+                telegram_id=update.effective_chat.id)
+            logger.info({project_manager})
+            groups = Group.objects.prefetch_related('students').filter(
+                week=Week.objects.get(actual=True),
+                project_manager=project_manager,
+                students__isnull=False,
+            ).order_by('timeslot__start_time')
+            groups_info = []
+            group_ids = []
+            for group in groups:
+                logger.info(f'{group.pk}')
+                if group.pk not in group_ids:
+                    group_ids.append(group.pk)
+                    group_students = []
+                    slot = f'{group.timeslot}\n\n'
+                    for student in group.students.all():
+                        group_students.append(f'{student.firstname} {student.lastname} - {student.get_level_display()}')
+                    group_students_text = "\n".join(group_students)
+                    groups_info.append("".join([slot, group_students_text, '\n']))
+                    logger.info({"".join([slot, group_students_text, '\n'])})
+                groups_info_text = "\n".join(groups_info)
+            keyboard = [
+                [InlineKeyboardButton("На главный", callback_data="to_start")]
+            ]
+            query.edit_message_text(
+                text=groups_info_text,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            query.answer()
+
+            return 'LOOK_GROUPS'
+
+
         def make_student_slots(update, _):
             logger.info('Start making student slots')
             morning_intervals = {
@@ -437,11 +474,16 @@ class Command(BaseCommand):
             states={
                 'MAIN_MENU': [
                     CallbackQueryHandler(make_groups, pattern='make_groups'),
+                    CallbackQueryHandler(look_groups, pattern='look_groups'),
                     CallbackQueryHandler(make_student_slots, pattern='make_student_slots'),
                     CallbackQueryHandler(student_assignment, pattern='student_assignment'),
                     CommandHandler('start', start_conversation),
                 ],
                 'MAKE_GROUPS': [
+                    CallbackQueryHandler(start_conversation, pattern='to_start'),
+                    CommandHandler('start', start_conversation),
+                ],
+                'LOOK_GROUPS': [
                     CallbackQueryHandler(start_conversation, pattern='to_start'),
                     CommandHandler('start', start_conversation),
                 ],
