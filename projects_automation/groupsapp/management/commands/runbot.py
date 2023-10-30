@@ -87,7 +87,7 @@ class Command(BaseCommand):
         def make_groups(update, _):
             logger.info("Start make groups")
             query = update.callback_query
-            week = Week.objects.get(pk=4)
+            week = Week.objects.get(actual=True)
             project_manager = Project_manager.objects.prefetch_related('schedule').get(telegram_id=update.effective_chat.id)
             timeslots = Timeslot.objects.all()
             created_groups_count = 0
