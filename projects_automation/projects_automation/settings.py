@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'import_export',
 ]
 
@@ -129,3 +128,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TRELLO_API_KEY = env.str('TRELLO_API_KEY')
 TRELLO_API_TOKEN = env.str('TRELLO_API_TOKEN')
+
+DATETIME_FORMAT = 'Y-m-d H:i:s'
+DATETIME_INPUT_FORMATS = ['%d-%m-%Y %H:%M:%S',]
