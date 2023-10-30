@@ -290,4 +290,7 @@ class StudentGroup(models.Model):
         user_id = self.student.telegram_id
         bot = Bot(token=tg_bot_key)
         message = f'Вам назначили время проекта и ПМ-а: {self.group}'
-        bot.send_message(text=message, chat_id=user_id)
+        try:
+            bot.send_message(text=message, chat_id=user_id)
+        except:
+            pass
