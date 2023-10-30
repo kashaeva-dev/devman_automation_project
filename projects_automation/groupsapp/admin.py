@@ -37,7 +37,6 @@ class ByLevelFilter(admin.SimpleListFilter):
     parameter_name = 'student'
 
     def lookups(self, request, model_admin):
-
         filters = [
             ('1_newborn', 'Новички'),
             ('2_newborn_plus', 'Новички+'),
@@ -51,6 +50,46 @@ class ByLevelFilter(admin.SimpleListFilter):
             level = Student.objects.filter(level=self.value())
             return queryset.filter(student__in=level)
         return queryset
+
+
+
+class ByLevelStudentSlotFilter(admin.SimpleListFilter):
+    title = _('Уровень')
+    parameter_name = 'student'
+
+    def lookups(self, request, model_admin):
+        filters = [
+            ('1_newborn', 'Новички'),
+            ('2_newborn_plus', 'Новички+'),
+            ('3_junior', 'Джуны'),
+        ]
+
+        return filters if filters else None
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(student__student__in=Student.objects.filter(level=self.value()))
+        else:
+            return queryset
+
+
+class ByWeekStudentSlotFilter(admin.SimpleListFilter):
+    title = _('Неделя')
+    parameter_name = 'student__week__id'
+
+    def lookups(self, request, model_admin):
+        weeks = Week.objects.all()
+        filters = []
+        for week in weeks:
+            filters.append((week.pk, week.start_date))
+
+        return filters if filters else None
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(student__week__id=self.value())
+        else:
+            return queryset
 
 
 @admin.register(Person)
@@ -147,6 +186,11 @@ class StudentProjectWeekAdmin(ImportExportModelAdmin):
 
 @admin.register(StudentProjectSlot)
 class StudentProjectSlotAdmin(ImportExportModelAdmin):
+    list_filter = (
+        ByLevelStudentSlotFilter,
+        ByWeekStudentSlotFilter,
+        'slot',
+    )
     list_per_page = 20
 
 

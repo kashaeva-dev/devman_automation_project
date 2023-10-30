@@ -174,6 +174,7 @@ class StudentProjectWeek(models.Model):
         return f'{self.pk}: {self.week}: {student}'
 
 
+
 class StudentProjectSlot(models.Model):
     student = models.ForeignKey(
         StudentProjectWeek,
@@ -243,7 +244,7 @@ class Group(models.Model):
 
 
 class StudentGroup(models.Model):
-    Group = models.ForeignKey(
+    group = models.ForeignKey(
         Group,
         verbose_name='Группа',
         on_delete=models.PROTECT,
@@ -252,6 +253,7 @@ class StudentGroup(models.Model):
         Student,
         verbose_name='Студент',
         on_delete=models.PROTECT,
+        related_name='student_group',
     )
 
     class Meta:
@@ -259,4 +261,4 @@ class StudentGroup(models.Model):
         verbose_name_plural = 'Студенты в группах'
 
     def __str__(self):
-        return f'{self.student}: {self.Group}'
+        return f'{self.student}: {self.group}'
