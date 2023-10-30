@@ -211,7 +211,7 @@ class Command(BaseCommand):
                 end = start - timedelta
                 return end.time()
 
-            week = Week.objects.get(pk=4)
+            week = Week.objects.get(actual=True)
 
             evening_intervals = {
                 '1': '14:00 - 17:00',

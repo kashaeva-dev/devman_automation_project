@@ -2,6 +2,7 @@ from datetime import time
 
 from django.conf import settings
 from django.contrib import admin
+from django.db.models import Count
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
@@ -57,15 +58,18 @@ class NotEmptyGroupFilter(admin.SimpleListFilter):
     parameter_name = 'students'
 
     def lookups(self, request, model_admin):
-        filters = [
-            (1, 'Да'),
-            (0, 'Нет'),
-        ]
+        filters = (
+            ('1', 'Нет'),
+            ('0', 'Да'),
+        )
         return filters if filters else None
 
     def queryset(self, request, queryset):
         if self.value() is not None:
-            return queryset.filter(students__isnull=bool(self.value()))
+            if self.value() == '1':
+                return queryset.annotate(num_students=Count('students')).filter(num_students=0)
+            elif self.value() == '0':
+                return queryset.exclude(students=None)
         else:
             return queryset
 
@@ -107,6 +111,11 @@ class ByWeekStudentSlotFilter(admin.SimpleListFilter):
             return queryset.filter(student__week__id=self.value())
         else:
             return queryset
+
+
+class StudentGroupInline(admin.TabularInline):
+    model = StudentGroup
+    extra = 1
 
 
 @admin.register(Person)
@@ -219,6 +228,7 @@ class GroupAdmin(ImportExportModelAdmin):
     list_per_page = 20
     actions = ['create_ws_board', 'invite_members',
                'delete_ws_board']
+    inlines = (StudentGroupInline, )
 
     def get_trello_link(self, obj):
         if obj.trello_link:
