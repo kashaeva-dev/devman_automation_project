@@ -19,7 +19,7 @@ FINAL = 4
 
 def student_start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Привет! Проверим хендлер?",
+                             text="Привет! Лишняя кнопка, чтобы было не так скучно. Жмяк",
                              reply_markup=keyboards.get_start_keyboard())
     return HELLO
 

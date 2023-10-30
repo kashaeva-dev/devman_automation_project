@@ -38,12 +38,18 @@ def get_available_intervals():
     intervals = []
     for full_interval in full_intervals:
         start = full_interval['start']
-        end_in_3_hours = datetime.time(start.hour+3)
+        time = start.hour+3
+        if time > 23:
+            time = 23
+        end_in_3_hours = datetime.time(time)
         while end_in_3_hours < full_interval['end']:
             end = end_in_3_hours
             interval = {'start': start, 'end': end}
             start = end
-            end_in_3_hours = datetime.time(start.hour+3)
+            time = start.hour + 3
+            if time > 23:
+                time = 23
+            end_in_3_hours = datetime.time(time)
             intervals.append(interval)
         interval = {'start': start, 'end': full_interval['end']}
         intervals.append(interval)
