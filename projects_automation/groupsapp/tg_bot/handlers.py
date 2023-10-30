@@ -29,8 +29,15 @@ def hello_keyboard_handler(update: Update, context: CallbackContext):
     data = query.data
     chat_id = update.effective_message.chat_id
     current_text = update.effective_message.text
-
     query.edit_message_text(text=current_text)
+
+    try:
+        student = bot_methods.get_student_by_tg(chat_id)
+    except:
+        message = 'Чего-то я не помню такого студента'
+        context.bot.send_message(chat_id=chat_id,
+                                 text=message,)
+
     context.bot.send_message(chat_id=chat_id,
                              text='Привет!\n '
                                   'Наступает пора командных проектов. Будет вместо учебного плана.\n'
