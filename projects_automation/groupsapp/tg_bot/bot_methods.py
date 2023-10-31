@@ -1,12 +1,21 @@
 import datetime
 
 import django.db.models
-
-from groupsapp.models import Project_manager, Week, Timeslot, Group, Student, StudentProjectWeek, StudentProjectSlot, PMSchedule
+from groupsapp.models import (
+    Week,
+    Timeslot,
+    Student,
+    StudentProjectWeek,
+    StudentProjectSlot,
+    PMSchedule
+)
 
 
 def get_student_by_tg(telegram_id):
-    return Student.objects.get(telegram_id=telegram_id)
+    student = Student.objects.get(telegram_id=telegram_id)
+    if student:
+        return student
+    return None
 
 
 def get_available_intervals():
@@ -75,19 +84,26 @@ def text_to_interval(interval_name):
 
 
 def get_slots_from_interval(interval) -> django.db.models.QuerySet:
-    slots = Timeslot.objects.filter(start_time__gte=interval['start'], end_time__lte=interval['end'])
+    slots = Timeslot.objects.filter(
+        start_time__gte=interval['start'],
+        end_time__lte=interval['end'])
     return slots
 
 
 def save_chosen_slots(student: Student, week: Week, slots: [Timeslot]):
-    student_week, created = StudentProjectWeek.objects.get_or_create(week=week, student=student)
-    student_slots = [StudentProjectSlot(student=student_week, slot=slot) for slot in slots]
+    student_week, created = StudentProjectWeek.objects.get_or_create(
+        week=week, student=student)
+    student_slots = [
+        StudentProjectSlot(
+            student=student_week, slot=slot) for slot in slots
+    ]
     StudentProjectSlot.objects.bulk_create(student_slots)
 
 
 def decline_student(student, week):
     try:
-        student_week = StudentProjectWeek.objects.get(week=week, student=student)
+        student_week = StudentProjectWeek.objects.get(
+            week=week, student=student)
     except StudentProjectWeek.DoesNotExist:
         student_week = None
 

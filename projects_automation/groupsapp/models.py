@@ -126,10 +126,12 @@ class Week(models.Model):
 
         for student in students:
             user_id = student.telegram_id
-            message = f'Настало время проектов. Чтобы выбрать себе удобное время для созвонов, введите /start'
+            message = ('Настало время проектов. '
+                       'тобы выбрать себе удобное время для '
+                       'созвонов, введите /start')
             try:
                 bot.send_message(text=message, chat_id=user_id)
-            except:
+            except Exception:
                 pass
 
 
@@ -195,7 +197,6 @@ class StudentProjectWeek(models.Model):
         student = (self.student.firstname +
                    ' ' + self.student.lastname)
         return f'{self.pk}: {self.week}: {student}'
-
 
 
 class StudentProjectSlot(models.Model):
@@ -295,5 +296,5 @@ class StudentGroup(models.Model):
         message = f'Вам назначили время проекта и ПМ-а: {self.group}'
         try:
             bot.send_message(text=message, chat_id=user_id)
-        except:
+        except Exception:
             pass

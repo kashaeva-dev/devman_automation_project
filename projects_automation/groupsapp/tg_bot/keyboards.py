@@ -1,18 +1,21 @@
-from datetime import datetime
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from tg_bot import bot_methods
 
-from groupsapp.tg_bot import bot_methods
+START_BUTTON = InlineKeyboardButton(
+    'Начать', callback_data='begin')
+CHOOSE_TIME_BUTTON = InlineKeyboardButton(
+    'Выбрать время', callback_data='choose_time')
+ANY_TIME_BUTTON = InlineKeyboardButton(
+    'В любое время', callback_data='any_time')
+ADD_SLOT_BUTTON = InlineKeyboardButton(
+    'Добавить слот', callback_data='add_slot')
 
-
-START_BUTTON = InlineKeyboardButton('Начать', callback_data='begin')
-CHOOSE_TIME_BUTTON = InlineKeyboardButton('Выбрать время', callback_data='choose_time')
-ANY_TIME_BUTTON = InlineKeyboardButton('В любое время', callback_data='any_time')
-ADD_SLOT_BUTTON = InlineKeyboardButton('Добавить слот', callback_data='add_slot')
-
-BACK_BUTTON = InlineKeyboardButton('Отмена', callback_data='back')
-CANCELL_BUTTON = InlineKeyboardButton('Отменить участие в проекте', callback_data='quit')
-DONE_BUTTON = InlineKeyboardButton('Готово', callback_data='done')
+BACK_BUTTON = InlineKeyboardButton(
+    'Отмена', callback_data='back')
+CANCELL_BUTTON = InlineKeyboardButton(
+    'Отменить участие в проекте', callback_data='quit')
+DONE_BUTTON = InlineKeyboardButton(
+    'Готово', callback_data='done')
 
 
 def get_start_keyboard():
@@ -55,12 +58,18 @@ def get_slots_keyboard(chosen_slots):
         interval_name = bot_methods.interval_to_text(interval)
         if interval_name in chosen_slots:
             continue
-        interval_button = InlineKeyboardButton(interval_name, callback_data=interval_name)
+        interval_button = InlineKeyboardButton(
+            interval_name, callback_data=interval_name)
         interval_buttons.append([interval_button])
 
     if not interval_buttons:
-        interval_buttons.append([InlineKeyboardButton('Интервалы закончились. Продолжить', callback_data='any_time')])
-
+        interval_buttons.append(
+            [
+                InlineKeyboardButton(
+                    'Интервалы закончились. Продолжить',
+                    callback_data='any_time')
+            ]
+        )
     keyboard = interval_buttons
 
     return InlineKeyboardMarkup(keyboard)
