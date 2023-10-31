@@ -1,10 +1,9 @@
-from datetime import time
-from dotenv import load_dotenv
-from telegram import Bot
-
 import os
+from datetime import time
 
 from django.db import models
+from dotenv import load_dotenv
+from telegram import Bot
 
 
 class Person(models.Model):
