@@ -1,9 +1,8 @@
-from django.core.management.base import BaseCommand
-
-from groupsapp.tg_bot.start_bot import start_bot
-
 import os
+
+from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
+from groupsapp.tg_bot.start_bot import start_bot
 
 
 class Command(BaseCommand):
@@ -12,4 +11,3 @@ class Command(BaseCommand):
 
         TG_API_KEY = os.getenv('TG_API_KEY')
         start_bot(TG_API_KEY)
-

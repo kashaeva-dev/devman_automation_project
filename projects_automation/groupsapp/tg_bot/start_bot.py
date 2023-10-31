@@ -1,12 +1,9 @@
-
 from telegram.ext import Updater
-from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandler
-from telegram.ext import MessageHandler, Filters
+from telegram.ext import (CommandHandler,
+                          CallbackQueryHandler,
+                          ConversationHandler)
 
-from groupsapp.tg_bot import handlers, pm_handlers
-
-
-
+from groupsapp.tg_bot import handlers
 
 
 def start_bot(tg_key):
@@ -19,16 +16,24 @@ def start_bot(tg_key):
         ],
         states={
             handlers.HELLO: [
-                CallbackQueryHandler(callback=handlers.hello_keyboard_handler, pass_chat_data=True)
+                CallbackQueryHandler(
+                    callback=handlers.hello_keyboard_handler,
+                    pass_chat_data=True)
             ],
             handlers.SCHEDULE: [
-                CallbackQueryHandler(callback=handlers.schedule_keyboard_handler, pass_chat_data=True)
+                CallbackQueryHandler(
+                    callback=handlers.schedule_keyboard_handler,
+                    pass_chat_data=True)
             ],
             handlers.SLOTS: [
-                CallbackQueryHandler(callback=handlers.slots_keyboard_handler, pass_chat_data=True)
+                CallbackQueryHandler(
+                    callback=handlers.slots_keyboard_handler,
+                    pass_chat_data=True)
             ],
             handlers.FINAL: [
-                CallbackQueryHandler(callback=handlers.final_keyboard_handler, pass_chat_data=True)
+                CallbackQueryHandler(
+                    callback=handlers.final_keyboard_handler,
+                    pass_chat_data=True)
             ]
         },
         fallbacks=[

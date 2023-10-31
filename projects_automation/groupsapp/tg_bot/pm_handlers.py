@@ -36,7 +36,10 @@ logger = logging.getLogger(__name__)
 def start_conversation(update, _):
     query = update.callback_query
     logger.info(f'{query}')
-    project_manager_ids = Project_manager.objects.values_list('telegram_id', flat=True)
+
+    project_manager_ids = Project_manager.objects.values_list(
+        'telegram_id', flat=True)
+
     logger.info(f'{project_manager_ids}')
 
     if update.effective_chat.id in project_manager_ids:
